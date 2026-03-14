@@ -15,20 +15,6 @@
       "when": 1773450122957,
       "tag": "0001_seed_tasks",
       "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1773491597817,
-      "tag": "0002_add_updated_and_completed_at",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1773491721215,
-      "tag": "0003_populate_updated_and_completed_at",
-      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import type { createTaskService } from "./task.service";
-import { createTaskSchema } from "./task.schema";
+import { createTaskSchema, taskIdSchema } from "./task.schema";
 
 type TaskService = ReturnType<typeof createTaskService>;
 
@@ -22,7 +22,7 @@ export function createTaskController(service: TaskService) {
 
     async delete(c: Context) {
       const tenantId = c.get("tenantId");
-      const id = c.req.param("id")!;
+      const { id } = taskIdSchema.parse({ id: c.req.param("id") });
       await service.delete(id, tenantId);
       return c.body(null, 204);
     },

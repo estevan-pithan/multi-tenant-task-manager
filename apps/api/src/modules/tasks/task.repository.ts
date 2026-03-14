@@ -1,11 +1,15 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { tasks } from "../../db/schema";
 import type { Database } from "../../db/client";
 
 export function createTaskRepository(db: Database) {
   return {
     async findAllByTenant(tenantId: string) {
-      return db.select().from(tasks).where(eq(tasks.tenantId, tenantId));
+      return db
+        .select()
+        .from(tasks)
+        .where(eq(tasks.tenantId, tenantId))
+        .orderBy(desc(tasks.createdAt));
     },
 
     async create(data: { title: string; status?: string; tenantId: string }) {

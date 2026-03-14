@@ -5,4 +5,8 @@ export const createTaskSchema = z.object({
   status: z.enum(["pending", "in_progress", "done"]).optional(),
 });
 
+export const taskIdSchema = z.object({
+  id: z.uuid(),
+});
+
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
