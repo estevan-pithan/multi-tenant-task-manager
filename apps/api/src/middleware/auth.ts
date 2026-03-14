@@ -1,11 +1,6 @@
 import type { Context, Next } from "hono";
 import { HTTPException } from "hono/http-exception";
 
-const TENANT_TOKENS: Record<string, string> = {
-  "token-tenant-a": "tenant_a",
-  "token-tenant-b": "tenant_b",
-};
-
 export async function authMiddleware(c: Context, next: Next) {
   const authorization = c.req.header("Authorization");
 
@@ -14,7 +9,13 @@ export async function authMiddleware(c: Context, next: Next) {
   }
 
   const token = authorization.slice(7);
-  const tenantId = TENANT_TOKENS[token];
+
+  const tenantTokens: Record<string, string> = {
+    [c.env.TENANT_A_TOKEN]: "tenant_a",
+    [c.env.TENANT_B_TOKEN]: "tenant_b",
+  };
+
+  const tenantId = tenantTokens[token];
 
   if (!tenantId) {
     throw new HTTPException(401, { message: "Invalid token" });

@@ -1,0 +1,11 @@
+{
+  "name": "multi-tenant-task-manager",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"bun run --filter api dev\" \"bun run --filter web dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
