@@ -6,4 +6,6 @@ export const tasks = pgTable("tasks", {
   status: text("status").default("pending").notNull(),
   tenantId: text("tenant_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
 });
