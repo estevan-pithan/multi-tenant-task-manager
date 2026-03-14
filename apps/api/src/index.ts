@@ -6,7 +6,11 @@ import { authMiddleware } from "./middleware/auth";
 import { taskRoutes } from "./modules/tasks/task.routes";
 
 type Env = {
-  Bindings: { DATABASE_URL: string; TENANT_A_TOKEN: string; TENANT_B_TOKEN: string };
+  Bindings: {
+    DATABASE_URL: string;
+    TENANT_A_TOKEN: string;
+    TENANT_B_TOKEN: string;
+  };
   Variables: { tenantId: string };
 };
 
@@ -18,7 +22,7 @@ app.use(
     origin: ["http://localhost:5173"],
     allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
 
 app.onError((err, c) => {

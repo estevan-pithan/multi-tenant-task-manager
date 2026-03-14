@@ -1,29 +1,58 @@
-import pluginJs from '@eslint/js'
-import eslintPluginPrettier from 'eslint-plugin-prettier/recommended'
-import reactHooks from 'eslint-plugin-react-hooks'
-import globals from 'globals'
-import tseslint from 'typescript-eslint'
+import js from "@eslint/js";
+import globals from "globals";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import unusedImports from "eslint-plugin-unused-imports";
+import tseslint from "typescript-eslint";
+import prettier from "eslint-plugin-prettier";
 
-/** @type {import('eslint').Linter.Config[]} */
-export default [
-	{ files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'] },
-	{ languageOptions: { globals: { ...globals.browser, ...globals.node } } },
-	pluginJs.configs.recommended,
-	...tseslint.configs.recommended,
-	reactHooks.configs['recommended-latest'],
-	eslintPluginPrettier,
-	{
-		files: ['**/*.tsx'],
-		languageOptions: { parserOptions: { parser: tseslint.parser } },
-		rules: {
-			'no-console': 'warn',
-			'@typescript-eslint/no-require-imports': 'off',
-			'@typescript-eslint/no-this-alias': 'off',
-			'@typescript-eslint/no-explicit-any': 'off',
-			'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-			'no-unexpected-multiline': 'error',
-			'no-undef': 'off',
-		},
-		ignores: ['node_modules', 'dist', 'coverage', 'build', '.vscode', 'public', '*.scss'],
-	},
-]
+export default tseslint.config(
+  { ignores: ["dist"] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ["**/*.{ts,tsx}"],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: {
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh,
+      "unused-imports": unusedImports,
+      prettier: prettier,
+    },
+
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      "react-refresh/only-export-components": [
+        "warn",
+        { allowConstantExport: true },
+      ],
+
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_"
+        }
+      ],
+      "prettier/prettier": ["warn", { semi: false }],
+      "unused-imports/no-unused-imports": "warn",
+      "unused-imports/no-unused-vars": [
+        "warn",
+        { 
+          vars: "all", 
+          varsIgnorePattern: "^_",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+          caughtErrors: "all",
+          caughtErrorsIgnorePattern: "^_"
+        },
+      ],
+    },
+  },
+);

@@ -21,9 +21,13 @@ export function Tasks() {
                 variant="outline"
                 size="icon"
                 disabled={isFetching > 0}
-                onClick={() => queryClient.resetQueries({ queryKey: ["tasks"] })}
+                onClick={() =>
+                  queryClient.resetQueries({ queryKey: ["tasks"] })
+                }
               >
-                <RefreshCwIcon className={`size-4 ${isFetching > 0 ? "animate-spin" : ""}`} />
+                <RefreshCwIcon
+                  className={`size-4 ${isFetching > 0 ? "animate-spin" : ""}`}
+                />
               </Button>
               <CreateTaskModal />
             </div>
