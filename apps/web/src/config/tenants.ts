@@ -8,11 +8,11 @@ export const tenants: Tenant[] = [
   {
     id: "tenant_a",
     label: "Tenant A",
-    token: import.meta.env.VITE_TENANT_A_TOKEN,
+    token: "token-tenant-a",
   },
   {
     id: "tenant_b",
     label: "Tenant B",
-    token: import.meta.env.VITE_TENANT_B_TOKEN,
+    token: "token-tenant-b",
   },
 ]
