@@ -1,8 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
-NEON_PROJECT_ID="sparkling-star-92049067"
 ENV_FILE="$(dirname "$0")/../.env"
+NEON_PROJECT_ID=$(grep '^NEON_PROJECT_ID=' "$ENV_FILE" | sed 's/NEON_PROJECT_ID=//')
+
+if [ -z "$NEON_PROJECT_ID" ]; then
+  echo "ERROR: NEON_PROJECT_ID not found in .env"
+  exit 1
+fi
 
 BRANCH_NAME="${1:-}"
 

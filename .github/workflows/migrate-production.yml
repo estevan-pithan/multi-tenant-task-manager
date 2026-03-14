@@ -1,0 +1,24 @@
+name: Migrate Production DB
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/drizzle/**"
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - run: bunx drizzle-kit migrate
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
