@@ -19,6 +19,7 @@ app.onError((err, c) => {
 });
 
 app.use("/tasks/*", authMiddleware);
+app.use("/tasks", authMiddleware);
 
 app.route("/tasks", taskRoutes);
 

@@ -1,0 +1,477 @@
+{
+  "info": {
+    "name": "Multi-Tenant Task Manager API",
+    "description": "Multi-tenant task management API. Authentication via static Bearer Token mapped to tenants.\n\n**Available tenants:**\n- `tenant_a` → Token: `token-tenant-a`\n- `tenant_b` → Token: `token-tenant-b`\n\n**Rate Limit:** 10 requests per minute per tenant (POST only).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{AUTH_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8787",
+      "type": "string"
+    },
+    {
+      "key": "AUTH_TOKEN",
+      "value": "token-tenant-a",
+      "type": "string"
+    },
+    {
+      "key": "TASK_ID",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Tasks",
+      "description": "Task management endpoints. All routes require authentication and are tenant-scoped.",
+      "item": [
+        {
+          "name": "List tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"]
+            },
+            "description": "Returns all tasks for the authenticated tenant."
+          },
+          "response": [
+            {
+              "name": "200 - Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/tasks",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["tasks"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"title\": \"Implement login\",\n    \"status\": \"pending\",\n    \"tenantId\": \"tenant_a\",\n    \"createdAt\": \"2026-03-14T10:00:00.000Z\",\n    \"updatedAt\": \"2026-03-14T10:00:00.000Z\",\n    \"completedAt\": null\n  }\n]"
+            },
+            {
+              "name": "401 - Missing token",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/tasks",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["tasks"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Missing or invalid Authorization header\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('TASK_ID', jsonData.id);",
+                  "    console.log('TASK_ID saved:', jsonData.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"My new task\",\n  \"status\": \"pending\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"]
+            },
+            "description": "Creates a new task for the authenticated tenant.\n\n**Body fields:**\n- `title` (string, required): Task title (1 to 255 characters)\n- `status` (string, optional): Initial status. Accepted values: `pending`, `in_progress`, `done`. Default: `pending`\n\n**Rate Limit:** 10 requests per minute per tenant."
+          },
+          "response": [
+            {
+              "name": "201 - Created successfully",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"My new task\",\n  \"status\": \"pending\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/tasks",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["tasks"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"title\": \"My new task\",\n  \"status\": \"pending\",\n  \"tenantId\": \"tenant_a\",\n  \"createdAt\": \"2026-03-14T10:00:00.000Z\",\n  \"updatedAt\": \"2026-03-14T10:00:00.000Z\",\n  \"completedAt\": null\n}"
+            },
+            {
+              "name": "400 - Validation error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/tasks",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["tasks"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Validation error\",\n  \"issues\": [\n    {\n      \"code\": \"too_small\",\n      \"minimum\": 1,\n      \"type\": \"string\",\n      \"inclusive\": true,\n      \"message\": \"String must contain at least 1 character(s)\",\n      \"path\": [\"title\"]\n    }\n  ]\n}"
+            },
+            {
+              "name": "429 - Rate limit exceeded",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Task\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/tasks",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["tasks"]
+                }
+              },
+              "status": "Too Many Requests",
+              "code": 429,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Too many requests\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create task (in_progress)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('TASK_ID', jsonData.id);",
+                  "    console.log('TASK_ID saved:', jsonData.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Task in progress\",\n  \"status\": \"in_progress\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"]
+            },
+            "description": "Creates a new task with `in_progress` status."
+          },
+          "response": []
+        },
+        {
+          "name": "Create task (done)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('TASK_ID', jsonData.id);",
+                  "    console.log('TASK_ID saved:', jsonData.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Completed task\",\n  \"status\": \"done\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"]
+            },
+            "description": "Creates a new task with `done` status."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete task",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks", "{{TASK_ID}}"]
+            },
+            "description": "Deletes a task by ID. The task must belong to the authenticated tenant.\n\nThe `{{TASK_ID}}` variable is automatically set when creating a task."
+          },
+          "response": [
+            {
+              "name": "204 - Deleted successfully",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/tasks/{{TASK_ID}}",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["tasks", "{{TASK_ID}}"]
+                }
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [],
+              "body": ""
+            },
+            {
+              "name": "404 - Task not found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/tasks/00000000-0000-0000-0000-000000000000",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["tasks", "00000000-0000-0000-0000-000000000000"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Task not found\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth - Errors",
+      "description": "Authentication error examples to test the auth middleware.",
+      "item": [
+        {
+          "name": "Missing token (401)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"]
+            },
+            "description": "Request without Authorization header. Should return 401."
+          },
+          "response": [
+            {
+              "name": "401 - Missing token",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/tasks",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["tasks"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Missing or invalid Authorization header\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Invalid token (401)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "token-invalido",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/tasks",
+              "host": ["{{BASE_URL}}"],
+              "path": ["tasks"]
+            },
+            "description": "Request with invalid token. Should return 401."
+          },
+          "response": [
+            {
+              "name": "401 - Invalid token",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/tasks",
+                  "host": ["{{BASE_URL}}"],
+                  "path": ["tasks"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid token\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
