@@ -38,8 +38,10 @@ Edit `.env` with your values:
 ```env
 # Database (Neon Postgres)
 DATABASE_URL=postgres://user:password@host/db?sslmode=require
+NEON_PROJECT_ID=your-neon-project-id
+NEON_PRODUCTION_ENDPOINT=your-production-endpoint
 
-# Auth tokens (static tokens for multi-tenant auth)
+# Auth tokens (server-side only)
 TENANT_A_TOKEN=token-tenant-a
 TENANT_B_TOKEN=token-tenant-b
 
