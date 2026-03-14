@@ -5,12 +5,11 @@ import { deleteTask } from "@/api/services/tasks/delete-task"
 import { useAuth } from "@/contexts/AuthContext"
 
 export function useGetTasks() {
-  const { isAuthenticated } = useAuth()
+  const { currentTenantId } = useAuth()
 
   return useQuery({
-    queryKey: ["tasks"],
+    queryKey: ["tasks", currentTenantId],
     queryFn: getTasks,
-    enabled: isAuthenticated,
   })
 }
 

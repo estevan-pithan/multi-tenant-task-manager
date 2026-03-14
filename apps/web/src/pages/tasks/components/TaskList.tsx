@@ -1,11 +1,18 @@
 import { useGetTasks } from "@/pages/tasks/hooks/use-tasks"
 import { TaskItem } from "./TaskItem"
+import { TaskItemSkeleton } from "./TaskItemSkeleton"
 
 export function TaskList() {
   const { data: tasks, isLoading, isError } = useGetTasks()
 
   if (isLoading) {
-    return <p className="text-muted-foreground py-8 text-center">Loading tasks...</p>
+    return (
+      <div className="grid grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <TaskItemSkeleton key={i} />
+        ))}
+      </div>
+    )
   }
 
   if (isError) {
@@ -17,7 +24,7 @@ export function TaskList() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="grid grid-cols-3 gap-4">
       {tasks.map((task) => (
         <TaskItem key={task.id} task={task} />
       ))}

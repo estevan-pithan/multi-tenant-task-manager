@@ -1,23 +1,29 @@
-import js from '@eslint/js'
-import globals from 'globals'
+import pluginJs from '@eslint/js'
+import eslintPluginPrettier from 'eslint-plugin-prettier/recommended'
 import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
+import globals from 'globals'
 import tseslint from 'typescript-eslint'
-import { defineConfig, globalIgnores } from 'eslint/config'
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      js.configs.recommended,
-      tseslint.configs.recommended,
-      reactHooks.configs.flat.recommended,
-      reactRefresh.configs.vite,
-    ],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-    },
-  },
-])
+/** @type {import('eslint').Linter.Config[]} */
+export default [
+	{ files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'] },
+	{ languageOptions: { globals: { ...globals.browser, ...globals.node } } },
+	pluginJs.configs.recommended,
+	...tseslint.configs.recommended,
+	reactHooks.configs['recommended-latest'],
+	eslintPluginPrettier,
+	{
+		files: ['**/*.tsx'],
+		languageOptions: { parserOptions: { parser: tseslint.parser } },
+		rules: {
+			'no-console': 'warn',
+			'@typescript-eslint/no-require-imports': 'off',
+			'@typescript-eslint/no-this-alias': 'off',
+			'@typescript-eslint/no-explicit-any': 'off',
+			'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+			'no-unexpected-multiline': 'error',
+			'no-undef': 'off',
+		},
+		ignores: ['node_modules', 'dist', 'coverage', 'build', '.vscode', 'public', '*.scss'],
+	},
+]

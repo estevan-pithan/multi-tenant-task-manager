@@ -1,8 +1,8 @@
 import { api } from "@/config/api"
+import { tenants } from "@/config/tenants"
 import {
   createContext,
   useContext,
-  useEffect,
   useLayoutEffect,
   useState,
   type ReactNode,
@@ -17,60 +17,42 @@ declare module "axios" {
 const TOKEN_KEY = "auth_token"
 
 interface AuthContextValues {
-  login: (token: string) => void
-  logout: () => void
-  token: string | null
-  isAuthenticated: boolean
-  isInitialized: boolean
-}
-
-interface AuthProviderProps {
-  children: ReactNode
+  switchTenant: (token: string) => void
+  token: string
+  currentTenantId: string
 }
 
 const AuthContext = createContext<AuthContextValues>({
-  login: () => {},
-  logout: () => {},
-  token: null,
-  isAuthenticated: false,
-  isInitialized: false,
+  switchTenant: () => {},
+  token: tenants[0].token,
+  currentTenantId: tenants[0].id,
 })
 
-export function useAuth() {
+export function useAuth(): AuthContextValues {
   const authContext = useContext(AuthContext)
   if (!authContext)
     throw new Error("useAuth must be used within an AuthProvider")
   return authContext
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [token, setToken] = useState<string | null>(null)
-  const [isInitialized, setIsInitialized] = useState(false)
+function getInitialToken(): string {
+  const stored = localStorage.getItem(TOKEN_KEY)
+  if (stored) return stored
+  localStorage.setItem(TOKEN_KEY, tenants[0].token)
+  return tenants[0].token
+}
 
-  function persistToken(newToken: string | null) {
+function resolveTenantId(token: string): string {
+  return tenants.find((t) => t.token === token)?.id ?? tenants[0].id
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [token, setToken] = useState(getInitialToken)
+
+  function switchTenant(newToken: string) {
     setToken(newToken)
-    if (newToken) {
-      localStorage.setItem(TOKEN_KEY, newToken)
-    } else {
-      localStorage.removeItem(TOKEN_KEY)
-    }
+    localStorage.setItem(TOKEN_KEY, newToken)
   }
-
-  function login(newToken: string) {
-    persistToken(newToken)
-  }
-
-  function logout() {
-    persistToken(null)
-  }
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY)
-    if (storedToken) {
-      setToken(storedToken)
-    }
-    setIsInitialized(true)
-  }, [])
 
   useLayoutEffect(() => {
     const authInterceptor = api.interceptors.request.use((config) => {
@@ -84,36 +66,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [token])
 
-  useLayoutEffect(() => {
-    const refreshInterceptor = api.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        if (
-          error.response?.status === 401 ||
-          error.response?.status === 403
-        ) {
-          persistToken(null)
-        }
-        return Promise.reject(error)
-      },
-    )
-    return () => {
-      api.interceptors.response.eject(refreshInterceptor)
-    }
-  }, [])
-
-  if (!isInitialized) {
-    return null
-  }
-
   return (
     <AuthContext.Provider
       value={{
-        login,
-        logout,
+        switchTenant,
         token,
-        isAuthenticated: !!token,
-        isInitialized,
+        currentTenantId: resolveTenantId(token),
       }}
     >
       {children}
