@@ -3,13 +3,14 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev --env-file ../../.env",
-    "deploy": "wrangler deploy --minify --env-file .env",
+    "deploy": "vitest run && wrangler deploy --minify --env-file .env",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "db:generate": "bun --env-file ../../.env drizzle-kit generate",
     "db:migrate": "bun --env-file ../../.env drizzle-kit migrate",
     "db:push": "bun --env-file ../../.env drizzle-kit push",
     "db:studio": "bun --env-file ../../.env drizzle-kit studio",
-    "db:branch": "bash scripts/use-branch.sh"
+    "db:branch": "bash scripts/use-branch.sh",
+    "test": "vitest run"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.9",
+    "vitest": "^4.1.0",
     "wrangler": "^4.4.0"
   }
 }
