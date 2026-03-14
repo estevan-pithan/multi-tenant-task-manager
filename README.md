@@ -1,0 +1,163 @@
+# Multi-Tenant Task Manager
+
+A multi-tenant task management application with a Cloudflare Workers API and a React frontend.
+
+Each tenant has isolated data — a user from `tenant_a` can never read or modify data from `tenant_b`.
+
+## Tech Stack
+
+**Backend:** Hono, Cloudflare Workers, Drizzle ORM, Neon Postgres, Zod v4
+
+**Frontend:** React 19, TypeScript, TailwindCSS 4, TanStack Query, Axios, shadcn (base-ui)
+
+**Tooling:** Bun, Vitest, Wrangler, Vite, ESLint, Prettier
+
+## Prerequisites
+
+- [Bun](https://bun.sh) (v1.0+)
+- A [Neon](https://neon.tech) Postgres database
+
+## Getting Started
+
+### 1. Clone and install dependencies
+
+```bash
+git clone <repository-url>
+cd multi-tenant-task-manager
+bun install
+```
+
+### 2. Configure environment variables
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your values:
+
+```env
+# Database (Neon Postgres)
+DATABASE_URL=postgres://user:password@host/db?sslmode=require
+
+# Auth tokens (static tokens for multi-tenant auth)
+TENANT_A_TOKEN=token-tenant-a
+TENANT_B_TOKEN=token-tenant-b
+
+# Frontend
+VITE_API_URL=http://localhost:8787
+```
+
+### 3. Run database migrations
+
+```bash
+cd apps/api
+bun run db:migrate
+cd ../..
+```
+
+This runs all Drizzle migrations in `apps/api/drizzle/` to create the `tasks` table and seed initial data.
+
+> If you modify the schema (`apps/api/src/db/schema.ts`), generate a new migration with `bun run db:generate` and then apply it with `bun run db:migrate`.
+
+### 4. Start the development servers
+
+```bash
+bun run dev
+```
+
+This starts both servers concurrently:
+- **API:** http://localhost:8787
+- **Web:** http://localhost:5173
+
+### 5. Run tests
+
+```bash
+bun run test
+```
+
+## Project Structure
+
+```
+multi-tenant-task-manager/
+├── apps/
+│   ├── api/                    # Cloudflare Workers API (Hono)
+│   │   ├── src/
+│   │   │   ├── db/             # Drizzle schema and client
+│   │   │   ├── middleware/     # Auth and rate limiting
+│   │   │   └── modules/tasks/  # Controller, service, repository, schema
+│   │   └── wrangler.jsonc
+│   └── web/                    # React SPA (Vite)
+│       └── src/
+│           ├── api/            # API service layer (Axios + Zod)
+│           ├── components/     # UI components (shadcn) + layout
+│           ├── config/         # API and tenant configuration
+│           ├── contexts/       # Auth context (tenant switching)
+│           └── pages/tasks/    # Task page, components, hooks
+├── .env.example
+└── package.json                # Workspace root
+```
+
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `bun run dev` | Start API and Web concurrently |
+| `bun run test` | Run API tests (Vitest) |
+| `bun run build` | Build the frontend for production |
+
+### API-specific (`apps/api`)
+
+| Command | Description |
+|---------|-------------|
+| `bun run dev` | Start Wrangler dev server |
+| `bun run test` | Run unit tests |
+| `bun run deploy` | Run tests + deploy to Cloudflare |
+| `bun run db:push` | Push schema to database |
+| `bun run db:generate` | Generate Drizzle migrations |
+| `bun run db:migrate` | Run Drizzle migrations |
+| `bun run db:studio` | Open Drizzle Studio |
+| `bun run db:branch` | List or switch Neon database branches |
+
+## Database Branch Protection
+
+The project includes a safety mechanism to prevent running migrations or schema pushes against the **production** Neon database branch locally.
+
+The `drizzle.config.ts` checks if the `DATABASE_URL` points to the production endpoint (via `NEON_PRODUCTION_ENDPOINT` env var). If it does, Drizzle Kit commands (`db:generate`, `db:migrate`, `db:push`) are **blocked** with an error message.
+
+To work locally, switch to a development branch:
+
+```bash
+cd apps/api
+
+# List available branches
+bun run db:branch
+
+# Switch to a dev branch
+bun run db:branch <branch-name>
+```
+
+This updates the `DATABASE_URL` in `.env` to point to the selected Neon branch. Production migrations should only run through CI/CD.
+
+## Architecture Decisions
+
+**Layered backend architecture** — Routes → Controller → Service → Repository. Each layer has a single responsibility, making the code testable and easy to follow. The factory pattern (`createTaskRepository`, `createTaskService`, `createTaskController`) enables dependency injection for testing.
+
+**Tenant isolation at query level** — Every database query includes a `WHERE tenant_id = ?` clause. The `tenantId` is extracted from the Bearer token in the auth middleware and propagated through the context — it never comes from the request body or URL params.
+
+**Static tokens** — Authentication uses simple token-to-tenant mapping via environment variables. This is intentional for a demo application and avoids unnecessary complexity (JWT, sessions, etc.).
+
+**In-memory rate limiting** — The POST endpoint is rate-limited to 10 requests per minute per tenant. An in-memory Map is used since Cloudflare Workers instances are short-lived. For production, a durable store (KV, D1, or Rate Limiting API) would be more appropriate.
+
+**No client-side routing** — The frontend is a single-page app with one view. React Router was intentionally omitted as there's only one page, keeping the bundle smaller and the code simpler.
+
+**Frontend tenant switching** — Instead of a login form, the UI provides a dropdown to switch between tenants. The selected tenant's token is stored in `localStorage` and attached to every API request via an Axios interceptor.
+
+**Production database protection** — `drizzle.config.ts` blocks all local Drizzle Kit commands if `DATABASE_URL` points to the production Neon endpoint. A `db:branch` script allows switching between Neon branches for safe local development.
+
+## Assumptions
+
+- Bun is used as the package manager (the project uses Bun workspaces)
+- The Neon database is already provisioned and the connection string is available
+- Static Bearer tokens are acceptable for authentication (as specified in the challenge)
+- Two tenants (`tenant_a`, `tenant_b`) are sufficient for demonstration
+- In-memory rate limiting is acceptable (resets on worker restart)
