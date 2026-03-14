@@ -31,4 +31,3 @@ taskRoutes.post("/", rateLimitMiddleware, (c) => c.get("controller").create(c));
 taskRoutes.delete("/:id", (c) => c.get("controller").delete(c));
 
 export { taskRoutes };
-    

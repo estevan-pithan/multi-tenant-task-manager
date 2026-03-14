@@ -146,13 +146,25 @@ This updates the `DATABASE_URL` in `.env` to point to the selected Neon branch. 
 
 **Static tokens** — Authentication uses simple token-to-tenant mapping via environment variables. This is intentional for a demo application and avoids unnecessary complexity (JWT, sessions, etc.).
 
-**In-memory rate limiting** — The POST endpoint is rate-limited to 10 requests per minute per tenant. An in-memory Map is used since Cloudflare Workers instances are short-lived. For production, a durable store (KV, D1, or Rate Limiting API) would be more appropriate.
+**In-memory rate limiting** — The POST endpoint is rate-limited to 10 requests per minute per tenant. An in-memory Map is used since Cloudflare Workers instances are short-lived. Standard `X-RateLimit-*` headers are included in all responses. For production, a durable store (KV, D1, or Rate Limiting API) would be more appropriate.
 
 **No client-side routing** — The frontend is a single-page app with one view. React Router was intentionally omitted as there's only one page, keeping the bundle smaller and the code simpler.
 
 **Frontend tenant switching** — Instead of a login form, the UI provides a dropdown to switch between tenants. The selected tenant's token is stored in `localStorage` and attached to every API request via an Axios interceptor.
 
 **Production database protection** — `drizzle.config.ts` blocks all local Drizzle Kit commands if `DATABASE_URL` points to the production Neon endpoint. A `db:branch` script allows switching between Neon branches for safe local development.
+
+## Rate Limiting
+
+The `POST /tasks` endpoint is rate-limited to **10 requests per minute per tenant**.
+
+All responses from the POST endpoint include standard headers:
+- `X-RateLimit-Limit` — Maximum requests allowed in the window
+- `X-RateLimit-Remaining` — Remaining requests in the current window
+- `X-RateLimit-Reset` — Unix timestamp (seconds) when the window resets
+- `Retry-After` — Seconds until the window resets (only on 429 responses)
+
+The current implementation uses an in-memory `Map`, which is acceptable for this challenge but would not work in production — each Cloudflare Worker isolate has its own memory, so rate limit counters are not shared across instances. In a production environment, this could be replaced by [Cloudflare Rate Limiting Rules](https://developers.cloudflare.com/waf/rate-limiting-rules/) (managed, no code changes needed) or a KV/Durable Objects-backed store for application-level control.
 
 ## Assumptions
 
