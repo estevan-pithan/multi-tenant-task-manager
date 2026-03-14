@@ -172,6 +172,23 @@ bun run db:generate
 bun run db:migrate
 ```
 
+### CI/CD — Production Migrations
+
+A GitHub Actions workflow (`.github/workflows/migrate-production.yml`) automatically runs database migrations on every push to `main` that changes files in `apps/api/drizzle/`.
+
+This is a **security measure** — migrations never run manually against production. Combined with the local [branch protection](#database-branch-protection) in `drizzle.config.ts`, this ensures that production schema changes only happen through a controlled, auditable pipeline.
+
+In a real-world team environment, this would be complemented by **branch protection rules** on `main` — requiring pull request reviews and approvals from one or more team members before any merge. This way, no migration reaches production without code review, reducing the risk of destructive or unintended schema changes.
+
+To enable this in your fork:
+
+1. Go to your repository on GitHub → **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret**
+3. Name: `NEON_DATABASE_URL`
+4. Value: your **production** Neon connection string (e.g. `postgres://user:pass@ep-xxx.aws.neon.tech/neondb?sslmode=require`)
+
+> Secrets are encrypted by GitHub and never exposed in logs or to collaborators — only the workflow has access to the value at runtime.
+
 ## Assumptions
 
 - Bun is used as the package manager (the project uses Bun workspaces)
