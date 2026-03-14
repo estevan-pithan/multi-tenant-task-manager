@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react"
+import { AxiosError } from "axios"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -22,15 +23,28 @@ import { useCreateTask } from "@/pages/tasks/hooks/use-tasks"
 import { TASK_STATUSES } from "@/types/task"
 import { PlusIcon } from "lucide-react"
 
+const TITLE_MAX_LENGTH = 255
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof AxiosError && error.response?.status === 429) {
+    const retryAfter = error.response.headers["retry-after"]
+    return retryAfter
+      ? `Too many requests. Try again in ${retryAfter}s.`
+      : "Too many requests. Please wait and try again."
+  }
+  return "Failed to create task. Please try again."
+}
+
 export function CreateTaskModal() {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [status, setStatus] = useState<string>("pending")
-  const { mutate, isPending } = useCreateTask()
+  const { mutate, isPending, error, reset } = useCreateTask()
 
   function resetForm() {
     setTitle("")
     setStatus("pending")
+    reset()
   }
 
   function handleSubmit(e: FormEvent) {
@@ -79,8 +93,12 @@ export function CreateTaskModal() {
               placeholder="What needs to be done?"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              maxLength={TITLE_MAX_LENGTH}
               autoFocus
             />
+            <p className="text-muted-foreground text-xs text-right">
+              {title.length}/{TITLE_MAX_LENGTH}
+            </p>
           </div>
           <div className="space-y-2">
             <Label>Status</Label>
@@ -97,6 +115,9 @@ export function CreateTaskModal() {
               </SelectContent>
             </Select>
           </div>
+          {error && (
+            <p className="text-destructive text-sm">{getErrorMessage(error)}</p>
+          )}
           <DialogFooter>
             <Button type="submit" disabled={isPending || !title.trim()}>
               {isPending ? "Creating..." : "Create task"}
